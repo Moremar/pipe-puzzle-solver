@@ -1,5 +1,6 @@
 from tkinter import Canvas, Label, IntVar, Button, Checkbutton, Tk, Frame, GROOVE, CENTER
 
+from utils import setup_logging
 from pipe_engine import Move, PipeEngine, GROW, SHRINK, ROLLBACK
 from point import Point
 
@@ -317,5 +318,6 @@ class App(Tk):
         self.running = False
 
 
+setup_logging()
 app = App()
 app.mainloop()
