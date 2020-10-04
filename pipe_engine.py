@@ -1,6 +1,8 @@
+import logging
 from typing import Optional
 from point import Point
 
+LOGGING_LEVEL = logging.DEBUG
 
 # Move types
 GROW = "grow"          # Add a cell at the end of a pipe
@@ -15,7 +17,7 @@ class Move:
         self.point = point  # point added (GROW) or removed (SHRINK) to the pipe
         self.complete = complete
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Move({0}, {1}, {2}, {3})".format(self.move_type, self.pipe_id, self.point, self.complete)
 
 
@@ -46,12 +48,12 @@ class PipeEngine:
         start = self.pipe_ends[self.curr_pipe][0]
         self.paths.append([(start, self.possible_dirs(start, self.curr_pipe))])
 
-    def possible_dirs(self, p, curr_pipe) -> list:
-        return [adj for adj in p.adjacent_points()
-                if self.universe[adj.x, adj.y] == '.' or adj == self.pipe_ends[curr_pipe][1]]
+    def possible_dirs(self, point: Point, pipe_id: int) -> list:
+        return [adj for adj in point.adjacent_points()
+                if self.universe[adj.x, adj.y] == '.' or adj == self.pipe_ends[pipe_id][1]]
 
     def next_move(self) -> Move:
-        self.display()
+        logging.debug(self.display())
         curr_point, moves = self.paths[self.curr_pipe][-1]
         if len(moves) == 0:
             # no possible move from here, revert the last move
@@ -65,14 +67,14 @@ class PipeEngine:
                 return Move(GROW, self.curr_pipe, next_point)
             else:
                 # target reached
-                print("DEBUG - Reached the goal for pipe " + str(self.curr_pipe))
+                logging.debug("Reached the goal for pipe " + str(self.curr_pipe))
                 self.paths[self.curr_pipe].append((next_point, []))
                 if self.curr_pipe < len(self.pipe_ends) - 1:
                     # move to next pipe
                     self.init_next_pipe()
                     return Move(GROW, self.curr_pipe - 1, next_point)
                 else:
-                    print("DEBUG - Last pipe completed")
+                    logging.info("Pipe puzzle solved")
                     # TODO it may use a path that does not cover all the universe
                     #      add a logic to check that later and consider as invalid
                     self.solved = True
@@ -83,25 +85,25 @@ class PipeEngine:
         point_to_shrink, _moves = self.paths[self.curr_pipe].pop()
         if len(self.paths[self.curr_pipe]) > 0:
             # remove the current point from the universe
-            print("DEBUG - we are blocked, shrink the current pipe")
+            logging.debug("We are blocked, shrink the current pipe")
             self.universe[point_to_shrink.x, point_to_shrink.y] = '.'
             return Move(SHRINK, self.curr_pipe, point_to_shrink)
         else:
             # roll back the origin of the current pipe, so we remove this pipe from the state
             # and remove the last point of the path of the previous pipe
-            print("DEBUG - we are blocked, rollback the current pipe to modify the previous pipe")
+            logging.debug("We are blocked, rollback the current pipe to modify the previous pipe")
             self.paths.pop()
             self.curr_pipe -= 1
             self.paths[-1].pop()
             return Move(ROLLBACK, self.curr_pipe + 1, None)
 
-    def display(self):
+    def display(self) -> str:
         res = 'Grid state:\n'
         for i in range(self.grid_size):
             for j in range(self.grid_size):
                 res += self.universe[i, j]
             res += '\n'
-        print(res)
+        return res
 
 
 # Test in terminal with a simple example
@@ -112,13 +114,33 @@ class PipeEngine:
 #   1 0 2 2
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        format='[%(levelname)-7s] %(asctime)s %(message)s',
+        datefmt='%m/%d/%Y %I:%M:%S %p',
+        level=LOGGING_LEVEL)
     size = 4
     pipes = [
        (Point(0, 0), Point(3, 1)),
        (Point(1, 1), Point(3, 0)),
        (Point(0, 3), Point(3, 2)),
     ]
+
+    # size = 10
+    # pipes = [
+    #     (Point(0, 0), Point(2, 3)),
+    #     (Point(0, 1), Point(4, 9)),
+    #     (Point(1, 1), Point(6, 9)),
+    #     (Point(2, 7), Point(4, 1)),
+    #     (Point(3, 0), Point(5, 6)),
+    #     (Point(3, 7), Point(4, 2)),
+    #     (Point(4, 6), Point(5, 7)),
+    #     (Point(6, 8), Point(9, 8)),
+    #     (Point(7, 9), Point(8, 1)),
+    #     (Point(8, 2), Point(9, 9)),
+    # ]
+
     engine = PipeEngine(size, pipes)
     while not engine.solved:
         move = engine.next_move()
-        print(move)
+        logging.debug(move)
+    logging.info(engine.display())
