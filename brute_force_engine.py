@@ -18,7 +18,7 @@ class BruteForceEngine(PipeEngine):
     def next_move(self) -> Move:
         logging.debug(self.display())
         curr_point, moves = self.paths[self.curr_pipe][-1]
-        if len(moves) == 0:
+        if len(moves) == 0 or self.is_doomed():
             # no possible move from here, revert the last move
             return self.shrink()
         else:
@@ -42,7 +42,7 @@ class BruteForceEngine(PipeEngine):
                     #      add a logic to check that later and consider as invalid
                     self.solved = True
                     self.display()
-                    return Move(GROW, self.curr_pipe, next_point, True)
+                    return Move(GROW, self.curr_pipe, next_point)
 
     def shrink(self) -> Move:
         point_to_shrink, _moves = self.paths[self.curr_pipe].pop()
@@ -60,6 +60,10 @@ class BruteForceEngine(PipeEngine):
             self.paths[-1].pop()
             return Move(ROLLBACK, self.curr_pipe + 1, None)
 
+    def is_doomed(self) -> bool:
+        """Hook for children classes to let the engine know early that a path is doomed to fail"""
+        return False
+
 
 if __name__ == "__main__":
     setup_logging()
@@ -69,20 +73,6 @@ if __name__ == "__main__":
        (Point(1, 1), Point(3, 0)),
        (Point(0, 3), Point(3, 2)),
     ]
-
-    # size = 10
-    # pipes = [
-    #     (Point(0, 0), Point(2, 3)),
-    #     (Point(0, 1), Point(4, 9)),
-    #     (Point(1, 1), Point(6, 9)),
-    #     (Point(2, 7), Point(4, 1)),
-    #     (Point(3, 0), Point(5, 6)),
-    #     (Point(3, 7), Point(4, 2)),
-    #     (Point(4, 6), Point(5, 7)),
-    #     (Point(6, 8), Point(9, 8)),
-    #     (Point(7, 9), Point(8, 1)),
-    #     (Point(8, 2), Point(9, 9)),
-    # ]
 
     engine = BruteForceEngine(size, pipes)
     while not engine.solved:

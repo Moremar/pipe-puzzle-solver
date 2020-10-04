@@ -9,16 +9,16 @@ GROW = "grow"          # Add a cell at the end of a pipe
 SHRINK = "shrink"      # Remove the last cell of a pipe
 ROLLBACK = "rollback"  # Remove the pipe (to fix the previous ones)
 
+# TODO fix display in terminal for pipe IDs > 9
 
 class Move:
-    def __init__(self, move_type: str, pipe_id: int, point: Optional[Point], complete=False):
+    def __init__(self, move_type: str, pipe_id: int, point: Optional[Point]):
         self.move_type = move_type
         self.pipe_id = pipe_id
         self.point = point  # point added (GROW) or removed (SHRINK) to the pipe
-        self.complete = complete
 
     def __repr__(self) -> str:
-        return "Move({0}, {1}, {2}, {3})".format(self.move_type, self.pipe_id, self.point, self.complete)
+        return "Move({0}, {1}, {2})".format(self.move_type, self.pipe_id, self.point)
 
 
 class PipeEngine:

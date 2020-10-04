@@ -2,6 +2,7 @@ from tkinter import Canvas, Label, IntVar, Button, Checkbutton, Tk, Frame, GROOV
 
 from utils import setup_logging
 from pipe_engine import Move, PipeEngine, GROW, SHRINK, ROLLBACK
+from path_checker_engine import PathCheckerEngine
 from point import Point
 
 
@@ -194,22 +195,22 @@ class App(Tk):
             (Point(4, 5), Point(5, 4)),
         ]
 
-        # self.grid_size = 10
-        # self.pipe_ends = [
-        #     (Point(1, 1), Point(6, 9)),
-        #     (Point(2, 7), Point(4, 1)),
-        #     (Point(3, 0), Point(5, 6)),
-        #     (Point(3, 7), Point(4, 2)),
-        #     (Point(4, 6), Point(5, 7)),
-        #     (Point(6, 8), Point(9, 8)),
-        #     (Point(7, 9), Point(8, 1)),
-        #     (Point(8, 2), Point(9, 9)),
-        #     (Point(0, 1), Point(4, 9)),
-        #     (Point(0, 0), Point(2, 3)),
-        # ]
+        self.grid_size = 10
+        self.pipe_ends = [
+            (Point(0, 0), Point(2, 3)),
+            (Point(0, 1), Point(4, 9)),
+            (Point(1, 1), Point(6, 9)),
+            (Point(2, 7), Point(4, 1)),
+            (Point(3, 0), Point(5, 6)),
+            (Point(3, 7), Point(4, 2)),
+            (Point(4, 6), Point(5, 7)),
+            (Point(6, 8), Point(9, 8)),
+            (Point(7, 9), Point(8, 1)),
+            (Point(8, 2), Point(9, 9)),
+        ]
 
         # Pipe engine
-        self.engine = PipeEngine(self.grid_size, self.pipe_ends)
+        self.engine = self.new_pipe_engine()
 
         # Title
         self.title_label = Label(self, text="PIPE PUZZLE SOLVER", justify=CENTER)
@@ -305,7 +306,7 @@ class App(Tk):
 
     def init_run(self):
         # reset pipe engine
-        self.engine = PipeEngine(self.grid_size, self.pipe_ends)
+        self.engine = self.new_pipe_engine()
         # reset pipes (engine reset is done on Start)
         self.grid_manager.reset()
         # reset steps counter
@@ -316,6 +317,9 @@ class App(Tk):
         self.stopped = False
         self.finished = False
         self.running = False
+        
+    def new_pipe_engine(self) -> PipeEngine:
+        return PathCheckerEngine(self.grid_size, self.pipe_ends)
 
 
 setup_logging()

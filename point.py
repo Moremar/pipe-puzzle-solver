@@ -8,6 +8,10 @@ class Point:
 
     def __repr__(self):
         return "(" + str(self.x) + ", " + str(self.y) + ")"
+    
+    def __hash__(self):
+        # hash the Point object as the tuple (x, y)
+        return (self.x, self.y).__hash__()
 
     def adjacent_points(self):
         return [Point(self.x, self.y + 1), Point(self.x, self.y - 1),
