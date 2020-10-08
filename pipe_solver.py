@@ -2,7 +2,7 @@ from tkinter import Canvas, Label, IntVar, Button, Checkbutton, Tk, Frame, GROOV
 
 from utils import setup_logging
 from pipe_engine import Move, PipeEngine, GROW, SHRINK, ROLLBACK
-from path_checker_engine import PathCheckerEngine
+from wall_follower_engine import WallFollowerEngine
 from point import Point
 
 
@@ -11,7 +11,7 @@ from point import Point
 # TODO ability to change the grid size
 
 # TK config
-CELL_SIZE = 64
+CELL_SIZE = 32
 DOT_SIZE = CELL_SIZE // 2
 PIPE_SIZE = CELL_SIZE // 4
 SLEEP_TIME = 1  # time in ms between 2 moves
@@ -151,7 +151,7 @@ class GridManager:
         elif move.move_type == ROLLBACK:
             # do not touch the current pipe (it already has no path left)
             # but disconnect the previous pipe from the goal
-            self.pipes[move.pipe_id - 1].shrink()
+            self.pipes[move.prev_pipe_id].shrink()
         else:
             raise Exception("Invalid move type " + move.move_type)
 
@@ -170,6 +170,7 @@ class App(Tk):
         self.running = False    # the resolution is running (used to avoid multiple callbacks)
         self.step_by_step_ready = False  # the grid is prepared for step by step run
         self.steps = 0
+        self.moves = []  # get the moves by batch from the engine and process them 1 by 1
 
         # for now hardcode an example of pipes configuration
         # 1 1 1 3
@@ -208,6 +209,24 @@ class App(Tk):
             (Point(7, 9), Point(8, 1)),
             (Point(8, 2), Point(9, 9)),
         ]
+
+        # self.grid_size = 13
+        # self.pipe_ends = [
+        #     (Point(0, 1), Point(4, 11)),
+        #     (Point(1, 1), Point(2, 12)),
+        #     (Point(1, 10), Point(6, 10)),
+        #     (Point(1, 11), Point(7, 11)),
+        #     (Point(2, 4), Point(12, 12)),
+        #     (Point(3, 0), Point(6, 2)),
+        #     (Point(4, 0), Point(6, 5)),
+        #     (Point(4, 6), Point(5, 4)),
+        #     (Point(5, 0), Point(7, 1)),
+        #     (Point(9, 6), Point(9, 11)),
+        #     (Point(9, 7), Point(10, 4)),
+        #     (Point(10, 1), Point(11, 11)),
+        #     (Point(11, 2), Point(12, 0)),
+        #     (Point(11, 10), Point(12, 11)),
+        # ]
 
         # Pipe engine
         self.engine = self.new_pipe_engine()
@@ -291,12 +310,16 @@ class App(Tk):
             self.after(SLEEP_TIME, self.start_run_loop)
         else:
             if self.interactive.get() == 0:
-                self.grid_manager.load(self.engine.paths)
+                self.grid_manager.load(self.engine.final_paths())
             self.steps_label2.config(text=str(self.steps))
             self.finished = True
 
     def apply_one_move(self):
-        move = self.engine.next_move()
+        # get the next set of moves if no more moves in buffer
+        if len(self.moves) == 0:
+            self.moves += self.engine.next_moves()
+
+        move = self.moves.pop(0)
         self.steps += 1
         if self.interactive.get() == 1:
             self.grid_manager.apply_move(move)
@@ -317,9 +340,10 @@ class App(Tk):
         self.stopped = False
         self.finished = False
         self.running = False
-        
+
     def new_pipe_engine(self) -> PipeEngine:
-        return PathCheckerEngine(self.grid_size, self.pipe_ends)
+        # return PathCheckerEngine(self.grid_size, self.pipe_ends)
+        return WallFollowerEngine(self.grid_size, self.pipe_ends)
 
 
 setup_logging()

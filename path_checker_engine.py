@@ -18,11 +18,11 @@ class PathCheckerEngine(BruteForceEngine):
         # connect the start to the end (even if several pipes use some common cells)
         for pipe_id in range(self.curr_pipe, len(self.pipe_ends)):
             start_point = self.paths[self.curr_pipe][-1][0] if (pipe_id == self.curr_pipe) \
-                        else self.pipe_ends[pipe_id][0]
-            end_point = self.pipe_ends[pipe_id][1]
+                        else self.pipe_ends[self.original_id(pipe_id)][0]
+            end_point = self.pipe_ends[self.original_id(pipe_id)][1]
             logging.debug("Check if there is a way for pipe {0} from {1} to {2}".format(
                 pipe_id, start_point, end_point))
-            if not self.exist_path(start_point, end_point, pipe_id):
+            if not self.exist_path(start_point, end_point, self.original_id(pipe_id)):
                 # There is no existing path for this pipe so we already can give up this path
                 return True
         return False
@@ -40,6 +40,10 @@ class PathCheckerEngine(BruteForceEngine):
                 if adj not in seen:
                     to_process.append(adj)
         return False
+
+    # override to re-order the paths
+    def final_paths(self):
+        return [self.paths[self.pipes_mapping.index(i)] for i in range(len(self.paths))]
 
 
 if __name__ == "__main__":
@@ -60,6 +64,6 @@ if __name__ == "__main__":
 
     engine = PathCheckerEngine(size, pipes)
     while not engine.solved:
-        move = engine.next_move()
-        logging.debug(move)
+        for next_move in engine.next_moves():
+            logging.debug(next_move)
     logging.info(engine.display())
