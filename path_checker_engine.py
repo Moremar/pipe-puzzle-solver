@@ -28,18 +28,21 @@ class PathCheckerEngine(BruteForceEngine):
         return False
 
     def exist_path(self, p1: Point, p2: Point, pipe_id: int) -> bool:
+        return self.shortest_path(p1, p2, pipe_id) > -1
+
+    def shortest_path(self, p1: Point, p2: Point, pipe_id: int) -> int:
         """Breadth first search (BFS) to find if p2 is still reachable from p1"""
-        to_process = [p1]
+        to_process = [(p1, 0)]
         seen = set()
         while len(to_process) > 0:
-            p = to_process.pop(0)
+            (p, depth) = to_process.pop(0)
             if p == p2:
-                return True
+                return depth
             seen.add(p)
             for adj in self.possible_dirs(p, pipe_id):
                 if adj not in seen:
-                    to_process.append(adj)
-        return False
+                    to_process.append((adj, depth + 1))
+        return -1
 
     # override to re-order the paths
     def final_paths(self):

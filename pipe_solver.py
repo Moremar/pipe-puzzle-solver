@@ -1,9 +1,11 @@
 from tkinter import Canvas, Label, IntVar, Button, Checkbutton, Tk, Frame, GROOVE, CENTER
+import logging
 
 from utils import setup_logging
 from pipe_engine import Move, PipeEngine, GROW, SHRINK, ROLLBACK
-from wall_follower_engine import WallFollowerEngine
+from empty_cells_checker_engine import EmptyCellsCheckerEngine
 from point import Point
+from samples import Samples
 
 
 # TODO handle when no solution
@@ -172,61 +174,7 @@ class App(Tk):
         self.steps = 0
         self.moves = []  # get the moves by batch from the engine and process them 1 by 1
 
-        # for now hardcode an example of pipes configuration
-        # 1 1 1 3
-        # 2 2 1 3
-        # 2 1 1 3
-        # 2 1 3 3
-
-        # self.grid_size = 4
-        # self.pipe_ends = [
-        #     (Point(0, 0), Point(3, 1)),
-        #     (Point(1, 1), Point(3, 0)),
-        #     (Point(0, 3), Point(3, 2)),
-        # ]
-
-        self.grid_size = 6
-        self.pipe_ends = [
-            (Point(0, 0), Point(2, 0)),
-            (Point(0, 1), Point(1, 3)),
-            (Point(0, 5), Point(4, 2)),
-            (Point(1, 2), Point(4, 1)),
-            (Point(1, 5), Point(3, 3)),
-            (Point(3, 0), Point(4, 4)),
-            (Point(4, 5), Point(5, 4)),
-        ]
-
-        self.grid_size = 10
-        self.pipe_ends = [
-            (Point(0, 0), Point(2, 3)),
-            (Point(0, 1), Point(4, 9)),
-            (Point(1, 1), Point(6, 9)),
-            (Point(2, 7), Point(4, 1)),
-            (Point(3, 0), Point(5, 6)),
-            (Point(3, 7), Point(4, 2)),
-            (Point(4, 6), Point(5, 7)),
-            (Point(6, 8), Point(9, 8)),
-            (Point(7, 9), Point(8, 1)),
-            (Point(8, 2), Point(9, 9)),
-        ]
-
-        # self.grid_size = 13
-        # self.pipe_ends = [
-        #     (Point(0, 1), Point(4, 11)),
-        #     (Point(1, 1), Point(2, 12)),
-        #     (Point(1, 10), Point(6, 10)),
-        #     (Point(1, 11), Point(7, 11)),
-        #     (Point(2, 4), Point(12, 12)),
-        #     (Point(3, 0), Point(6, 2)),
-        #     (Point(4, 0), Point(6, 5)),
-        #     (Point(4, 6), Point(5, 4)),
-        #     (Point(5, 0), Point(7, 1)),
-        #     (Point(9, 6), Point(9, 11)),
-        #     (Point(9, 7), Point(10, 4)),
-        #     (Point(10, 1), Point(11, 11)),
-        #     (Point(11, 2), Point(12, 0)),
-        #     (Point(11, 10), Point(12, 11)),
-        # ]
+        self.grid_size, self.pipe_ends = Samples.get_puzzle("12")
 
         # Pipe engine
         self.engine = self.new_pipe_engine()
@@ -343,9 +291,10 @@ class App(Tk):
 
     def new_pipe_engine(self) -> PipeEngine:
         # return PathCheckerEngine(self.grid_size, self.pipe_ends)
-        return WallFollowerEngine(self.grid_size, self.pipe_ends)
+        # return WallFollowerEngine(self.grid_size, self.pipe_ends)
+        return EmptyCellsCheckerEngine(self.grid_size, self.pipe_ends)
 
 
-setup_logging()
+setup_logging(logging.INFO)
 app = App()
 app.mainloop()

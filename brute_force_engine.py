@@ -27,11 +27,13 @@ class BruteForceEngine(PipeEngine):
             return self.shrink()
         else:
             # perform a move
-            next_point = moves.pop(0)
+            next_point = self.choose_next_point(moves)
             original_pipe_id = self.original_id(self.curr_pipe)
             self.universe[next_point.x, next_point.y] = str(original_pipe_id)
             if next_point != self.pipe_ends[original_pipe_id][1]:
-                self.paths[self.curr_pipe].append((next_point, self.possible_dirs(next_point, original_pipe_id)))
+                next_cells = self.possible_dirs(next_point, original_pipe_id)
+                next_cells = self.filter_next_cells(next_cells)
+                self.paths[self.curr_pipe].append((next_point, next_cells))
                 return [Move(GROW, original_pipe_id, next_point)]
             else:
                 # target reached
@@ -72,6 +74,14 @@ class BruteForceEngine(PipeEngine):
     def begin_next_moves_hook(self):
         """Hook for children classes to provide some moves instead of the brute-force solution"""
         return []
+
+    def choose_next_point(self, points: [Point]) -> Point:
+        """pick a move among the possible directions"""
+        return points.pop(0)
+    
+    def filter_next_cells(self, points: [Point]):
+        """override to filter out some potential next cells"""
+        return points
 
 
 if __name__ == "__main__":
