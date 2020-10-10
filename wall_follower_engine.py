@@ -45,9 +45,14 @@ class WallFollowerEngine(PathCheckerEngine):
         loop_done = False
         curr = origin
 
+        # get the direction where the wall is
         wall_dir = LEFT if self.is_wall(curr.adj(LEFT)) \
             else UP if self.is_wall(curr.adj(UP)) \
             else RIGHT if self.is_wall(curr.adj(RIGHT)) \
+            else DOWN if self.is_wall(curr.adj(DOWN)) \
+            else LEFT if self.is_wall(curr.adj(UP).adj(LEFT)) \
+            else UP if self.is_wall(curr.adj(UP).adj(RIGHT)) \
+            else RIGHT if self.is_wall(curr.adj(DOWN).adj(RIGHT)) \
             else DOWN
 
         while not loop_done:
@@ -70,8 +75,8 @@ class WallFollowerEngine(PathCheckerEngine):
             original_pipe_id = self.original_id(pipe_id)
             start: Point = self.pipe_ends[original_pipe_id][0]
             end: Point = self.pipe_ends[original_pipe_id][1]
-            start_against_wall = any([self.is_wall(p) for p in start.adjacent_points()])
-            end_against_wall = any([self.is_wall(p) for p in end.adjacent_points()])
+            start_against_wall = any([self.is_wall(p) for p in start.adjacent_points() + start.diagonal_points()])
+            end_against_wall = any([self.is_wall(p) for p in end.adjacent_points() + end.diagonal_points()])
             if not start_against_wall or not end_against_wall:
                 # both ends are not against the wall, no need to check this pipe
                 continue

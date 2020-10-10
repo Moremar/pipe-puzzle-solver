@@ -56,7 +56,8 @@ class BruteForceEngine(PipeEngine):
         if len(self.paths[self.curr_pipe]) > 0:
             # remove the current point from the universe
             logging.debug("We are blocked, shrink the current pipe")
-            self.universe[point_to_shrink.x, point_to_shrink.y] = '.'
+            if point_to_shrink != self.pipe_ends[self.original_id(self.curr_pipe)][1]:
+                self.universe[point_to_shrink.x, point_to_shrink.y] = '.'
             return [Move(SHRINK, self.original_id(self.curr_pipe), point_to_shrink)]
         else:
             # roll back the origin of the current pipe, so we remove this pipe from the state

@@ -3,7 +3,7 @@ import logging
 
 from utils import setup_logging
 from pipe_engine import Move, PipeEngine, GROW, SHRINK, ROLLBACK
-from empty_cells_checker_engine import EmptyCellsCheckerEngine
+from shortest_path_engine import ShortestPathEngine
 from point import Point
 from samples import Samples
 
@@ -174,7 +174,7 @@ class App(Tk):
         self.steps = 0
         self.moves = []  # get the moves by batch from the engine and process them 1 by 1
 
-        self.grid_size, self.pipe_ends = Samples.get_puzzle("12")
+        self.grid_size, self.pipe_ends = Samples.get_puzzle("14")
 
         # Pipe engine
         self.engine = self.new_pipe_engine()
@@ -292,7 +292,8 @@ class App(Tk):
     def new_pipe_engine(self) -> PipeEngine:
         # return PathCheckerEngine(self.grid_size, self.pipe_ends)
         # return WallFollowerEngine(self.grid_size, self.pipe_ends)
-        return EmptyCellsCheckerEngine(self.grid_size, self.pipe_ends)
+        # return EmptyCellsCheckerEngine(self.grid_size, self.pipe_ends)
+        return ShortestPathEngine(self.grid_size, self.pipe_ends)
 
 
 setup_logging(logging.INFO)

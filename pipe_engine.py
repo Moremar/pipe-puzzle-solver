@@ -9,8 +9,6 @@ GROW = "grow"          # Add a cell at the end of a pipe
 SHRINK = "shrink"      # Remove the last cell of a pipe
 ROLLBACK = "rollback"  # Remove the pipe (to fix the previous ones)
 
-# TODO fix display in terminal for pipe IDs > 9
-
 
 class Move:
     def __init__(self, move_type: str, pipe_id: int, point: Optional[Point], prev_pipe_id=None):
@@ -59,7 +57,7 @@ class PipeEngine:
         res = 'Grid state:\n'
         for i in range(self.grid_size):
             for j in range(self.grid_size):
-                res += self.universe[i, j]
+                res += '{0: <3}'.format(self.universe[i, j])  # left aligned 3-width string
             res += '\n'
         return res
 

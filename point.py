@@ -21,6 +21,11 @@ class Point:
         """All 4 adjacent points"""
         return [self.adj(UP), self.adj(RIGHT), self.adj(DOWN), self.adj(LEFT)]
 
+    def diagonal_points(self):
+        """All 4 diagonal points"""
+        return [self.adj(UP).adj(LEFT), self.adj(UP).adj(RIGHT),
+                self.adj(DOWN).adj(LEFT), self.adj(DOWN).adj(RIGHT)]
+
     def adj(self, direction: str):
         """Adjacent point in the given direction"""
         if direction == LEFT:
