@@ -52,6 +52,9 @@ class BruteForceEngine(PipeEngine):
                     return [Move(GROW, original_pipe_id, next_point)]
 
     def shrink(self) -> [Move]:
+        if self.curr_pipe < 0:
+            # The maze has no solution
+            return []
         point_to_shrink, _moves = self.paths[self.curr_pipe].pop()
         if len(self.paths[self.curr_pipe]) > 0:
             # remove the current point from the universe
@@ -65,8 +68,12 @@ class BruteForceEngine(PipeEngine):
             logging.debug("We are blocked, rollback the current pipe to modify the previous pipe")
             self.paths.pop()
             self.curr_pipe -= 1
-            self.paths[-1].pop()
-            return [Move(ROLLBACK, self.original_id(self.curr_pipe + 1), None, self.original_id(self.curr_pipe))]
+            if len(self.paths) == 0:
+                # The maze has no solution
+                return []
+            else:
+                self.paths[-1].pop()
+                return [Move(ROLLBACK, self.original_id(self.curr_pipe + 1), None, self.original_id(self.curr_pipe))]
 
     def is_doomed(self) -> bool:
         """Hook for children classes to let the engine know early that a path is doomed to fail"""
@@ -79,7 +86,7 @@ class BruteForceEngine(PipeEngine):
     def choose_next_point(self, points: [Point]) -> Point:
         """pick a move among the possible directions"""
         return points.pop(0)
-    
+
     def filter_next_cells(self, points: [Point]):
         """override to filter out some potential next cells"""
         return points

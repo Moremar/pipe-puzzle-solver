@@ -37,7 +37,11 @@ class Possibles:
 
     def next(self, pipe_id):
         """Return the next unexplored path with the smallest distance for this pipe"""
+        if pipe_id not in self._possibles:
+            # only happens when there is no solution to the maze
+            return -1, []
         if len(self._possibles[pipe_id].keys()) == 0:
+            # no more possible move for this pipe, we will need to revert the previous one
             return -1, []
         distance = min(self._possibles[pipe_id].keys())
         res = self._possibles[pipe_id][distance].pop(0)
@@ -132,6 +136,9 @@ class ShortestPathEngine(EmptyCellsCheckerEngine):
         # pipes that were generated automatically because they follow a wall
         logging.debug("We are blocked, rollback the last pipe and the previous ones following walls")
         logging.debug(self.display())
+        if self.curr_pipe < 0:
+            # No solution
+            return []
         self.possibles.delete(self.curr_pipe)
 
         # no more possible moves for this pipe so roll it back entirely
@@ -141,7 +148,11 @@ class ShortestPathEngine(EmptyCellsCheckerEngine):
 
         # also rollback the previous pipes if they were following the walls
         while not self.possibles.exist(self.curr_pipe):
+            moves_to_revert_next_pipe = self.shrink()
             set_of_moves += self.shrink()
+            if len(moves_to_revert_next_pipe) == 0:
+                # we reverted up to the very first pipe, so there is no solution
+                break
 
         return set_of_moves
 
