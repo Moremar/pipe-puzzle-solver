@@ -149,7 +149,7 @@ class ShortestPathEngine(EmptyCellsCheckerEngine):
         # also rollback the previous pipes if they were following the walls
         while not self.possibles.exist(self.curr_pipe):
             moves_to_revert_next_pipe = self.shrink()
-            set_of_moves += self.shrink()
+            set_of_moves += moves_to_revert_next_pipe
             if len(moves_to_revert_next_pipe) == 0:
                 # we reverted up to the very first pipe, so there is no solution
                 break
@@ -174,12 +174,13 @@ class ShortestPathEngine(EmptyCellsCheckerEngine):
             start_walls = len([x for x in start_adj if self.is_wall(x)])
             target_walls = len([x for x in target_adj if self.is_wall(x)])
             wall_nb = max(start_walls, target_walls)
-            score += max(wall_nb, 2) * 10
+            score += wall_nb * 10
 
             # increase score if the distance between the start and target is high
             distance = self.shortest_path(start, target, self.original_id(i))
             if distance > self.grid_size/2:
                 score += distance * 2
+
             if score > best_score:
                 best_pipe = i
                 best_score = score

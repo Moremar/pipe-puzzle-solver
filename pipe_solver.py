@@ -1,4 +1,4 @@
-from tkinter import Tk, Label, Frame, Button, Checkbutton, Entry, Canvas, StringVar, IntVar
+from tkinter import Tk, Label, Frame, Button, Checkbutton, Radiobutton, Entry, Canvas, StringVar, IntVar, ttk
 from tkinter.constants import GROOVE, X, Y, LEFT, RIGHT, NW, END
 import logging
 import re
@@ -7,7 +7,7 @@ from utils import setup_logging
 from pipe_engine import Move, PipeEngine, GROW, SHRINK, ROLLBACK
 from shortest_path_engine import ShortestPathEngine
 from point import Point
-# from samples import Samples
+from samples import Samples
 
 
 # TK config
@@ -18,13 +18,13 @@ SLEEP_TIME = 1  # time in ms between 2 moves
 MAX_PIPES_NUMBER = 16
 
 # colors
-WHITE = "ghost white"
+WHITE = "white"
 GREEN = "lime green"
 RED = "red2"
 BLUE = "royal blue"
-YELLOW = "yellow"
-PURPLE = "purple"
-PINK = "hot pink"
+YELLOW = "gold"
+PURPLE = "MediumOrchid2"
+PINK = "magenta"
 BEIGE = "thistle"
 BLACK = "black"
 LIGHT_BLUE = "sky blue"
@@ -32,12 +32,11 @@ GREY = "grey"
 DARK_GREEN = "green4",
 LIGHT_PINK = "pink"
 ORANGE = "dark orange"
-GOLD = "goldenrod"
 TURQUOISE = "turquoise"
 BROWN = "brown"
-MAGENTA = "magenta"
 LIGHT_GREEN = "lawn green"
 BACKGROUND_BLUE = "lavender"
+DARK_PURPLE = "dark violet"
 
 PIPE_COLORS = {
     0: RED,
@@ -53,11 +52,10 @@ PIPE_COLORS = {
     10: BLACK,
     11: DARK_GREEN,
     12: LIGHT_GREEN,
-    13: LIGHT_BLUE,
-    14: BEIGE,
-    15: MAGENTA,
+    13: DARK_PURPLE,
+    14: LIGHT_BLUE,
+    15: BEIGE,
     16: LIGHT_PINK,
-    17: GOLD
 }
 
 
@@ -119,7 +117,11 @@ class Pipe:
 
     def grow(self, x: int, y: int):
         curr = self.path[-1]
+        if Point(x, y) not in curr.adjacent_points():
+            # sanity check, should never happen
+            raise Exception("Invalid GROW operation") 
         self.path.append(Point(x, y))
+        
         self.connector_widgets.append(create_rectangle_widget(self.canvas, curr.x, curr.y, x, y, self.color))
         self.path_widgets.append(create_circle_widget(self.canvas, x, y, self.color, DOT_SIZE))
 
@@ -208,10 +210,10 @@ class App(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
         self.title("Pipe puzzle solver")
-        self.config_mode = True # while setting up the maze to solve
-        self.finished = False   # the resolution completed
-        self.stopped = False    # the user interrupted the run
-        self.running = False    # the resolution is running (used to avoid multiple callbacks)
+        self.ready_for_run = True        # once the validation of manual pipes setup is done
+        self.finished = False            # the resolution completed
+        self.stopped = False             # the user interrupted the run
+        self.running = False             # the resolution is running (used to avoid multiple callbacks)
         self.step_by_step_ready = False  # the grid is prepared for step by step run
         self.steps = 0
         self.moves = []  # get the moves by batch from the engine and process them 1 by 1
@@ -224,6 +226,37 @@ class App(Tk):
 
         # Pipe engine
         self.engine = self.new_pipe_engine()
+
+        # TODO remove once tested on Windows
+        # a fix for running on OSX - to center the title text vertically
+        # if self.tk.call('tk', 'windowingsystem') == 'aqua':  # only for OSX
+        #     s = ttk.Style()
+        #     # Note: the name is specially for the text in the widgets
+        #     # s.configure('TNotebook', padding=0)
+        #     # s.configure('TNotebook.Tab', padding=(12, 8, 12, 0))
+        #     # s.configure('TFrame', padding=(12, 8, 12, 0))
+
+        # Define custom style for the ttk Notebook (tabs control) since the default is ugly on MacOS
+        s = ttk.Style()
+        s.theme_create("pipestyle", parent="classic", settings={
+            "TNotebook": {
+                "configure": {
+                    "tabmargins": [2, 5, 2, 0],
+                    "background": WHITE
+                }
+            },
+            "TNotebook.Tab": {
+                "configure": {
+                    "padding": (10, 3),
+                    "background": WHITE
+                },
+                "map": {
+                    "background": [("selected", WHITE)],
+                    "expand": [("selected", [1, 1, 1, 0])]
+                }
+            }
+        })
+        s.theme_use("pipestyle")
 
         # Frame
         self.frame = Frame(self, padx=5, pady=5, borderwidth=2, relief=GROOVE)
@@ -248,13 +281,23 @@ class App(Tk):
 
         # Config panel
         self.config_panel = Frame(self.frame, padx=5, pady=5)
-        self.config_panel.pack(padx=5, side=RIGHT, fill=Y)
+        self.config_panel.pack(padx=0, side=RIGHT, fill=Y)
+
+        self.tabs_control = ttk.Notebook(self.config_panel, style='TNotebook')
+        manual_tab = Frame(self.tabs_control, padx=5, pady=5)
+        sample_tab = Frame(self.tabs_control, padx=5, pady=5)
+
+        self.tabs_control.add(manual_tab, text='Manual')
+        self.tabs_control.add(sample_tab, text='Samples')
+        self.tabs_control.pack(expand=1, fill="both")
+
+        # Manual tab
 
         sv = StringVar()
         sv.set(self.grid_size)
-        sv.trace("w", lambda name, index, mode, sv2=sv: self.on_grid_size_changed(sv2))
+        sv.trace("w", lambda name, index, mode, sv2=sv: self.on_grid_size_sv_changed(sv2))
 
-        self.grid_size_frame = Frame(self.config_panel)
+        self.grid_size_frame = Frame(manual_tab)
         self.grid_size_frame.pack(fill=X)
         self.grid_size_label = Label(self.grid_size_frame, text="Grid size : ")
         self.grid_size_label.pack(side=LEFT, anchor=NW, pady=(3, 0))
@@ -263,7 +306,7 @@ class App(Tk):
         self.clear_button = Button(self.grid_size_frame, text="Clear", command=self.on_clear_clicked)
         self.clear_button.pack(side=RIGHT, padx=5)
 
-        self.pipe_buttons_frame = Frame(self.config_panel)
+        self.pipe_buttons_frame = Frame(manual_tab)
         self.pipe_buttons_frame.pack(fill=X, pady=5)
         self.add_pipe_button = Button(self.pipe_buttons_frame, text="Add Pipe", width=9, command=self.add_pipe_click)
         self.add_pipe_button.pack(side=LEFT, anchor=NW, padx=5)
@@ -272,8 +315,24 @@ class App(Tk):
         self.delete_pipe_button.pack(side=LEFT, anchor=NW)
 
         # empty originally, grows when the user adds some pipes from the UI
-        self.pipes_list_frame = Frame(self.config_panel)
+        self.pipes_list_frame = Frame(manual_tab)
         self.pipes_list_frame.pack(fill=X)
+
+        # Samples tab
+
+        self.samples_frame = Frame(sample_tab)
+        self.samples_frame.pack(fill=X)
+        self.samples_label = Label(self.samples_frame, text="Load a sample pipe puzzle :")
+        self.samples_label.pack(side="top", fill=X, anchor=NW, pady=5)
+
+        self.sample_radio_id = IntVar()
+        for i in range(5, 14):
+            frame = Frame(self.samples_frame)
+            frame.pack(fill=X)
+            name = str(i) + "x" + str(i)
+            sample_radio = Radiobutton(
+            frame, text=name, variable=self.sample_radio_id, value=i, command=self.on_sample_chosen)
+            sample_radio.pack(side=LEFT, padx=70)
 
         # Footer
         self.footer = Frame(self, padx=5)
@@ -310,18 +369,30 @@ class App(Tk):
         self.interactive_checkbox.select()
 
         # initialize the grid with the default size
-        self.on_grid_size_changed(sv)
+        self.on_grid_size_changed()
 
-    def on_grid_size_changed(self, sv):
+    def on_sample_chosen(self):
+        size = self.sample_radio_id.get()
+        logging.info('Loading sample of size ' + str(size))
+        self.grid_size, self.pipe_ends = Samples.get_puzzle(str(size))
+        self.on_grid_size_changed()
+        self.grid_manager.load_maze(self.grid_size, self.pipe_ends)
+        self.ready_for_run = True
+        self.init_run()
+
+    def on_grid_size_sv_changed(self, sv):
         if re.match(r'^[0-9]+$', sv.get()):
             val = int(sv.get())
             if 3 < val < 16:
                 logging.info('Setting grid size to ' + str(val))
                 self.grid_size = val
-                self.canvas['width'] = 10 + self.grid_size * CELL_SIZE
-                self.canvas['height'] = 10 + self.grid_size * CELL_SIZE
-                self.grid_manager.grid_size = val
-                self.on_clear_clicked()
+                self.on_grid_size_changed()
+
+    def on_grid_size_changed(self):
+        self.canvas['width'] = 10 + self.grid_size * CELL_SIZE
+        self.canvas['height'] = 10 + self.grid_size * CELL_SIZE
+        self.grid_manager.grid_size = self.grid_size
+        self.on_clear_clicked()
 
     def on_clear_clicked(self):
         self.grid_manager.draw_grid()
@@ -376,6 +447,7 @@ class App(Tk):
                 self.pipes[updated_pipe_index + 1].start_entry.focus_set()
             else:
                 self.add_pipe_click()
+        self.ready_for_run = False
 
     def add_pipe_click(self, focus=True):
         if len(self.pipes) == MAX_PIPES_NUMBER:
@@ -393,6 +465,7 @@ class App(Tk):
         self.pipes.append(PipeSetup(frame, start_entry, end_entry, None, None))
         if focus:
             start_entry.focus_set()
+        self.ready_for_run = False
 
     def delete_pipe_click(self):
         pipe = self.pipes.pop()
@@ -401,6 +474,7 @@ class App(Tk):
         if pipe.end_widget is not None:
             self.canvas.delete(pipe.end_widget)
         pipe.frame.destroy()
+        self.ready_for_run = False
 
     def validate_pipes_setup(self) -> str:
         # delete the empty pipes at the end if any
@@ -433,10 +507,11 @@ class App(Tk):
     def next_button_click(self):
         if self.finished or self.running or self.stopped:
             return
-        if self.config_mode:
-            # start a resolution, ensure the pipes setup is valid
-            self.validate_pipes_setup()
-            self.config_mode = False
+        if not self.ready_for_run:
+            if not self.init_run():
+                return
+            self.ready_for_run = True
+
         if not self.engine.solved:
             self.apply_one_move()
         else:
@@ -469,7 +544,6 @@ class App(Tk):
                 self.grid_manager.load_solution(self.engine.final_paths())
             self.steps_label2.config(text=str(self.steps))
             self.finished = True
-            self.config_mode = True
 
     def apply_one_move(self):
         # get the next set of moves if no more moves in buffer
@@ -491,12 +565,13 @@ class App(Tk):
 
     def init_run(self):
         # ensure the specified pipes setup is valid
-        error = self.validate_pipes_setup()
-        if len(error) > 0:
-            self.error_label["text"] = error
-            return False
-        self.error_label["text"] = ""
-        self.config_mode = False
+        if not self.ready_for_run:
+            error = self.validate_pipes_setup()
+            if len(error) > 0:
+                self.error_label["text"] = error
+                return False
+            self.error_label["text"] = ""
+            self.ready_for_run = True
         # reset pipe engine
         self.engine = self.new_pipe_engine()
         # reset pipes
@@ -509,6 +584,7 @@ class App(Tk):
         self.stopped = False
         self.finished = False
         self.running = False
+        self.moves = []
         return True
 
     def new_pipe_engine(self) -> PipeEngine:
