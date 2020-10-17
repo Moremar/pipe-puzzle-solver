@@ -45,8 +45,6 @@ class BruteForceEngine(PipeEngine):
                     return [Move(GROW, original_pipe_id, next_point)]
                 else:
                     logging.info("Pipe puzzle solved")
-                    # TODO it may use a path that does not cover all the universe
-                    #      add a logic to check that later and consider as invalid
                     self.solved = True
                     self.display()
                     return [Move(GROW, original_pipe_id, next_point)]

@@ -119,9 +119,9 @@ class Pipe:
         curr = self.path[-1]
         if Point(x, y) not in curr.adjacent_points():
             # sanity check, should never happen
-            raise Exception("Invalid GROW operation") 
+            raise Exception("Invalid GROW operation")
         self.path.append(Point(x, y))
-        
+
         self.connector_widgets.append(create_rectangle_widget(self.canvas, curr.x, curr.y, x, y, self.color))
         self.path_widgets.append(create_circle_widget(self.canvas, x, y, self.color, DOT_SIZE))
 
@@ -219,22 +219,9 @@ class App(Tk):
         self.moves = []  # get the moves by batch from the engine and process them 1 by 1
         self.pipes = []  # temporary structure to create the pipes from the UI
 
-        # TODO add a way to load some sample for different sizes
-        # self.grid_size, self.pipe_ends = Samples.get_puzzle("14")
         self.grid_size = 7
         self.pipe_ends = []
-
-        # Pipe engine
         self.engine = self.new_pipe_engine()
-
-        # TODO remove once tested on Windows
-        # a fix for running on OSX - to center the title text vertically
-        # if self.tk.call('tk', 'windowingsystem') == 'aqua':  # only for OSX
-        #     s = ttk.Style()
-        #     # Note: the name is specially for the text in the widgets
-        #     # s.configure('TNotebook', padding=0)
-        #     # s.configure('TNotebook.Tab', padding=(12, 8, 12, 0))
-        #     # s.configure('TFrame', padding=(12, 8, 12, 0))
 
         # Define custom style for the ttk Notebook (tabs control) since the default is ugly on MacOS
         s = ttk.Style()
@@ -295,7 +282,7 @@ class App(Tk):
 
         sv = StringVar()
         sv.set(self.grid_size)
-        sv.trace("w", lambda name, index, mode, sv2=sv: self.on_grid_size_sv_changed(sv2))
+        sv.trace("w", lambda _name, _index, _mode, sv2=sv: self.on_grid_size_sv_changed(sv2))
 
         self.grid_size_frame = Frame(manual_tab)
         self.grid_size_frame.pack(fill=X)
@@ -330,8 +317,8 @@ class App(Tk):
             frame = Frame(self.samples_frame)
             frame.pack(fill=X)
             name = str(i) + "x" + str(i)
-            sample_radio = Radiobutton(
-            frame, text=name, variable=self.sample_radio_id, value=i, command=self.on_sample_chosen)
+            sample_radio = Radiobutton(frame, text=name, variable=self.sample_radio_id, value=i,
+                                       command=self.on_sample_chosen)
             sample_radio.pack(side=LEFT, padx=70)
 
         # Footer
