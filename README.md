@@ -14,11 +14,10 @@ Once a pipe start/end is positioned on the grid, its coordinates will appear in 
 
 ![Pipe Puzzle image 1](./images/pipe-puzzle-image-1.png)
 
----
-**Note** : 
-You never need to manually enter coordinates, you should always click on the grid.
-To modify a pipe start/end, click on its entry in the right panel to focus it, and click on the new position in the grid.
----
+> **Note**  
+>You never need to manually enter coordinates, you should always click on the grid.
+>To modify a pipe start/end, click on its entry in the right panel to focus it, and click on the new position in the grid.
+
 
 ### Puzzle resolution
 
@@ -37,8 +36,6 @@ From the _Samples_ tab, a sample puzzle of different sizes can be loaded in the 
 ![Pipe Puzzle image 3](./images/pipe-puzzle-image-3.png)
 
 
----
-**Note** : 
-This program was developed to render nicely on Mac OS.  
-It should run correctly on Windows as well, but the layout may be messed up due to tkinter OS-specific rendering.
----
+> **Note**  
+>This program was developed to render nicely on Mac OS.  
+>It should run correctly on Windows as well, but the layout may be messed up due to tkinter OS-specific rendering.
