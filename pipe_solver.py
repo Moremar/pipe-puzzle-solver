@@ -165,6 +165,11 @@ class GridManager:
 
     def draw_grid(self):
         self.destroy()
+        
+        # hide the white background with a rechangle covering the entire canvas with the grey color of the GUI
+        self.grid_widgets.append(self.canvas.create_rectangle(
+            0, 0, self.grid_size * CELL_SIZE + 50, self.grid_size * CELL_SIZE + 50, fill="#eee", outline=""))
+
         self.grid_widgets.append(self.canvas.create_rectangle(
             5, 5, 5 + self.grid_size * CELL_SIZE, 5 + self.grid_size * CELL_SIZE, fill=BACKGROUND_BLUE, outline=""))
         for i in range(0, self.grid_size + 1):
@@ -224,26 +229,26 @@ class App(Tk):
         self.engine = self.new_pipe_engine()
 
         # Define custom style for the ttk Notebook (tabs control) since the default is ugly on MacOS
-        s = ttk.Style()
-        s.theme_create("pipestyle", parent="classic", settings={
-            "TNotebook": {
-                "configure": {
-                    "tabmargins": [2, 5, 2, 0],
-                    "background": WHITE
-                }
-            },
-            "TNotebook.Tab": {
-                "configure": {
-                    "padding": (10, 3),
-                    "background": WHITE
-                },
-                "map": {
-                    "background": [("selected", WHITE)],
-                    "expand": [("selected", [1, 1, 1, 0])]
-                }
-            }
-        })
-        s.theme_use("pipestyle")
+        # s = ttk.Style()
+        # s.theme_create("pipestyle", parent="classic", settings={
+        #     "TNotebook": {
+        #         "configure": {
+        #             "tabmargins": [2, 5, 2, 0],
+        #             "background": WHITE
+        #         }
+        #     },
+        #     "TNotebook.Tab": {
+        #         "configure": {
+        #             "padding": (10, 3),
+        #             "background": WHITE
+        #         },
+        #         "map": {
+        #             "background": [("selected", WHITE)],
+        #             "expand": [("selected", [1, 1, 1, 0])]
+        #         }
+        #     }
+        # })
+        # s.theme_use("pipestyle")
 
         # Frame
         self.frame = Frame(self, padx=5, pady=5, borderwidth=2, relief=GROOVE)
